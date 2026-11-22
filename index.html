@@ -158,8 +158,52 @@ async function ensureConnected(){if(db&&user)return true;try{await connectFireba
 function openSheet(){ $('sheet').classList.add('show'); if(isAdminMode()) loadAllRooms(); }
 $('roomSettings').onclick=openSheet;$('close').onclick=()=> $('sheet').classList.remove('show');$('sheet').onclick=e=>{if(e.target===$('sheet'))$('sheet').classList.remove('show')};
 function randomRoom(){return Math.random().toString(36).slice(2,8).toUpperCase()}
-async function enterRoom(code,create){if(!/^[A-Z0-9]{3,12}$/.test(code)){setNotice('房間代碼請使用 3–12 位英數字');return;}if(!await ensureConnected())return;room=code;const roomRef=ref(db,`rooms/${room}/members/${user.uid}`);const display=$('displayName').value.trim()||'車友';await set(roomRef,{name:display,joinedAt:Date.now()});$('meName').textContent=display+'（本人）';$('roombadge').textContent='房間：'+room;$('status').textContent='已加入車隊';$('sheet').classList.remove('show');setNotice(create?'車隊建立成功，請分享連結給隊友':'已加入車隊，等待隊友位置');$('shareGps').textContent='開始分享 GPS';listenRoom();}
-$('createRoom').onclick=()=>{const code=($('roomCode').value.trim().toUpperCase()||randomRoom());$('roomCode').value=code;enterRoom(code,true)};
+
+async function enterRoom(code, create){
+  if(!/^[A-Z0-9]{3,12}$/.test(code)){
+    setNotice('房間代碼請使用 3–12 位英數字');
+    alert('房間代碼請使用 3–12 位英數字');
+    return;
+  }
+  if(!await ensureConnected()) return;
+
+  // 若是一般使用者按下「加入車隊」，先檢查房間是否真實存在
+  if(!create){
+    try{
+      const checkSnap = await get(ref(db, `rooms/${code}`));
+      if(!checkSnap.exists()){
+        setNotice(`找不到房間「${code}」，請確認隊長提供的代碼`);
+        alert(`找不到房間「${code}」！\n請確認隊長已建立車隊並輸入正確的房間代碼。`);
+        return;
+      }
+    }catch(e){
+      setNotice('檢查房間失敗：' + e.message);
+      return;
+    }
+  } else {
+    // 管理員建立房間時，先寫入房間建立時間標記
+    await set(ref(db, `rooms/${code}/createdAt`), Date.now());
+  }
+
+  room = code;
+  const roomRef = ref(db, `rooms/${room}/members/${user.uid}`);
+  const display = $('displayName').value.trim() || '車友';
+  await set(roomRef, {name: display, joinedAt: Date.now()});
+  $('meName').textContent = display + '（本人）';
+  $('roombadge').textContent = '房間：' + room;
+  $('status').textContent = '已加入車隊';
+  $('sheet').classList.remove('show');
+  setNotice(create ? '車隊建立成功，請分享連結給隊友' : '已加入車隊，等待隊友位置');
+  $('shareGps').textContent = '開始分享 GPS';
+  listenRoom();
+}
+
+$('createRoom').onclick=()=>{
+  if(!isAdminMode()){ alert('僅限管理員建立車隊'); return; }
+  const code=($('roomCode').value.trim().toUpperCase()||randomRoom());
+  $('roomCode').value=code;
+  enterRoom(code,true);
+};
 $('joinRoom').onclick=()=>enterRoom($('roomCode').value.trim().toUpperCase(),false);
 $('shareLink').onclick=async()=>{if(!room){setNotice('先建立或加入車隊');return;}const url=new URL(location.href);url.searchParams.set('room',room);try{await navigator.clipboard.writeText(url.href);setNotice('加入連結已複製！傳給隊友即可');}catch{prompt('複製這個連結給隊友：',url.href)}};
 function listenRoom(){if(membersRef)membersRef=null;const allRef=ref(db,`rooms/${room}/members`);onValue(allRef,snap=>{const members=snap.val()||{};peerData=members;renderPeers(members);});}
