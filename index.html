@@ -30,7 +30,7 @@ const DEFAULT_CONFIG = {
 };
 
 const map=L.map('map').setView([23.0,120.2],16);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(map);
+L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}',{maxZoom:19,attribution:'© 內政部國土測繪中心'}).addTo(map);
 setTimeout(()=>map.invalidateSize(),300);
 
 let app,db,auth,user=null,room='',myMarker,peerMarkers={},gpsWatch=null,peerData={},membersRef=null;
