@@ -5,18 +5,29 @@
 <title>即時跟車系統 V2</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-:root{--bg:#101419;--panel:#171c22;--muted:#a9b4bf;--blue:#3997ff;--green:#29c363;--red:#ff666c}*{box-sizing:border-box}html,body{height:100%;margin:0;padding:0;background:var(--bg);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}#map{position:fixed;inset:0;height:100%;width:100%;z-index:1}.top{position:absolute;z-index:1000;top:12px;left:12px;right:12px;display:flex;gap:8px;justify-content:space-between;pointer-events:none}.pill{background:#171b20ed;border:1px solid #ffffff1b;border-radius:14px;padding:9px 12px;box-shadow:0 3px 14px #0004}.pill small{display:block;color:var(--muted);font-size:11px}.pill strong{font-size:14px}.speed{position:absolute;z-index:1000;right:14px;bottom:145px;width:90px;height:90px;border-radius:50%;background:var(--green);border:4px solid #e2ffec;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#082414;box-shadow:0 5px 20px #0005}.speed b{font-size:27px}.speed span{font-size:12px;font-weight:800}.bottom{position:absolute;z-index:1000;bottom:12px;left:12px;right:12px;background:#171c22ed;border:1px solid #ffffff20;border-radius:18px;padding:12px;box-shadow:0 4px 20px #0005}.people{display:flex;gap:12px;justify-content:space-between;margin-bottom:10px}.person{flex:1;display:flex;gap:9px;align-items:center;min-width:0}.dot{width:11px;height:11px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px #3997ff20;flex:none}.dot.red{background:var(--red);box-shadow:0 0 0 4px #ff666c20}.person b{display:block;font-size:14px}.person small{display:block;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.actions{display:flex;gap:8px}.btn{border:0;border-radius:12px;background:#3269f3;color:white;font-weight:750;padding:12px 13px;flex:1;font-size:14px;cursor:pointer}.btn.secondary{background:#303943}.btn.green{background:#158848}.notice{position:absolute;z-index:1000;top:78px;left:50%;transform:translateX(-50%);background:#202831e8;border:1px solid #ffffff18;border-radius:12px;padding:8px 12px;font-size:12px;max-width:90%;text-align:center}.roomBadge{position:absolute;z-index:1000;top:122px;left:50%;transform:translateX(-50%);background:#151a20ed;border:1px solid #ffffff24;border-radius:13px;padding:7px 12px;font-size:12px;white-space:nowrap}.sheet{position:fixed;z-index:3000;inset:0;background:#0009;display:none;align-items:flex-end}.sheet.show{display:flex}.modal{width:100%;max-height:90dvh;overflow:auto;background:#171c22;border-radius:22px 22px 0 0;padding:18px 16px 26px;border:1px solid #ffffff18}.modal h2{margin:0 0 8px;font-size:20px}.modal p{margin:0 0 12px;color:#c1cad3;font-size:13px;line-height:1.55}.input{width:100%;padding:13px;border-radius:12px;border:1px solid #ffffff24;background:#0f1317;color:white;font-size:16px;margin:7px 0 12px}.small{font-size:12px;color:var(--muted);line-height:1.55}.modal .btn{margin:5px 0;width:100%;flex:none}.x{float:right;background:#343d47;border:0;color:white;border-radius:9px;padding:8px 11px}.leaflet-control-attribution{font-size:9px!important}.hidden{display:none!important}.adminTag{display:inline-block;background:#29c36330;color:#29c363;font-size:11px;padding:2px 7px;border-radius:6px;margin-left:6px;vertical-align:middle}
+:root{--bg:#101419;--panel:#171c22;--muted:#a9b4bf;--blue:#3997ff;--green:#29c363;--red:#ff666c}*{box-sizing:border-box}html,body{height:100%;margin:0;padding:0;background:var(--bg);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}#map{position:fixed;inset:0;height:100%;width:100%;z-index:1}.top{position:absolute;z-index:1000;top:12px;left:12px;right:12px;display:flex;gap:8px;justify-content:space-between;pointer-events:none}.pill{background:#171b20ed;border:1px solid #ffffff1b;border-radius:14px;padding:9px 12px;box-shadow:0 3px 14px #0004}.pill small{display:block;color:var(--muted);font-size:11px}.pill strong{font-size:14px}.speed{position:absolute;z-index:1000;right:14px;bottom:145px;width:90px;height:90px;border-radius:50%;background:var(--green);border:4px solid #e2ffec;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#082414;box-shadow:0 5px 20px #0005}.speed b{font-size:27px}.speed span{font-size:12px;font-weight:800}.bottom{position:absolute;z-index:1000;bottom:12px;left:12px;right:12px;background:#171c22ed;border:1px solid #ffffff20;border-radius:18px;padding:12px;box-shadow:0 4px 20px #0005}.people{display:flex;gap:12px;justify-content:space-between;margin-bottom:10px}.person{flex:1;display:flex;gap:9px;align-items:center;min-width:0}.dot{width:11px;height:11px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px #3997ff20;flex:none}.dot.red{background:var(--red);box-shadow:0 0 0 4px #ff666c20}.person b{display:block;font-size:14px}.person small{display:block;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.actions{display:flex;gap:8px}.btn{border:0;border-radius:12px;background:#3269f3;color:white;font-weight:750;padding:12px 13px;flex:1;font-size:14px;cursor:pointer}.btn.secondary{background:#303943}.btn.green{background:#158848}.btn.red{background:#c93b42}.notice{position:absolute;z-index:1000;top:78px;left:50%;transform:translateX(-50%);background:#202831e8;border:1px solid #ffffff18;border-radius:12px;padding:8px 12px;font-size:12px;max-width:90%;text-align:center}.roomBadge{position:absolute;z-index:1000;top:122px;left:50%;transform:translateX(-50%);background:#151a20ed;border:1px solid #ffffff24;border-radius:13px;padding:7px 12px;font-size:12px;white-space:nowrap}.sheet{position:fixed;z-index:3000;inset:0;background:#0009;display:none;align-items:flex-end}.sheet.show{display:flex}.modal{width:100%;max-height:90dvh;overflow:auto;background:#171c22;border-radius:22px 22px 0 0;padding:18px 16px 26px;border:1px solid #ffffff18}.modal h2{margin:0 0 8px;font-size:20px}.modal p{margin:0 0 12px;color:#c1cad3;font-size:13px;line-height:1.55}.input{width:100%;padding:13px;border-radius:12px;border:1px solid #ffffff24;background:#0f1317;color:white;font-size:16px;margin:7px 0 12px}.small{font-size:12px;color:var(--muted);line-height:1.55}.modal .btn{margin:5px 0;width:100%;flex:none}.x{float:right;background:#343d47;border:0;color:white;border-radius:9px;padding:8px 11px}.leaflet-control-attribution{font-size:9px!important}.hidden{display:none!important}.adminTag{display:inline-block;background:#29c36330;color:#29c363;font-size:11px;padding:2px 7px;border-radius:6px;margin-left:6px;vertical-align:middle}.roomList{background:#0f1317;border:1px solid #ffffff18;border-radius:12px;padding:10px;margin-top:8px}.roomItem{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid #ffffff12}.roomItem:last-child{border-bottom:0}.roomItemInfo b{font-size:14px;color:#fff}.roomItemInfo small{display:block;color:var(--muted);font-size:11px}.roomItemBtns{display:flex;gap:6px}.miniBtn{border:0;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#fff;cursor:pointer}
 </style></head><body>
 <div id="map"></div>
 <div class="top"><div class="pill"><small>即時跟車系統 V2</small><strong id="status">未加入車隊</strong></div><div class="pill"><small>車隊距離</small><strong id="distance">-- m</strong></div></div>
 <div class="notice" id="notice">輸入房間代碼加入車隊</div><div class="roomBadge" id="roombadge">房間：尚未加入</div>
 <div class="speed"><b id="speed">--</b><span>km/h</span></div>
 <div class="bottom"><div class="people"><div class="person"><span class="dot"></span><div><b id="meName">本人</b><small id="meInfo">尚未分享位置</small></div></div><div class="person"><span class="dot red"></span><div><b>隊友</b><small id="peerInfo">等待隊友加入</small></div></div></div><div class="actions"><button class="btn green" id="shareGps">開始分享 GPS</button><button class="btn secondary" id="roomSettings">車隊 / 設定</button></div></div>
-<div class="sheet" id="sheet"><div class="modal"><button class="x" id="close">關閉</button><h2>車隊設定<span id="adminBadge" class="adminTag hidden">管理模式</span></h2><p id="sheetDesc">輸入你的顯示名稱與隊長提供的房間代碼，即可加入車隊同步位置。</p><label class="small">你的顯示名稱</label><input class="input" id="displayName" maxlength="18" placeholder="例如：小王 / 車1"><label class="small">房間代碼（3–12 位英數字）</label><input class="input" id="roomCode" maxlength="12" placeholder="例如：ROAD123"><button class="btn" id="joinRoom">加入車隊</button><div id="adminControls" class="hidden"><button class="btn green" id="createRoom">建立新車隊</button><button class="btn secondary" id="shareLink">分享加入連結</button></div><p class="small" style="margin-top:12px">位置分享須由每位參與者自行同意。GPS 更新需要 HTTPS 網頁與瀏覽器定位權限。<span id="adminUnlock" style="text-decoration:underline;cursor:pointer;margin-left:6px;color:#7d8996">管理員登入</span></p></div></div>
+<div class="sheet" id="sheet"><div class="modal"><button class="x" id="close">關閉</button><h2>車隊設定<span id="adminBadge" class="adminTag hidden">管理模式</span></h2><p id="sheetDesc">輸入你的顯示名稱與隊長提供的房間代碼，即可加入車隊同步位置。</p><label class="small">你的顯示名稱</label><input class="input" id="displayName" maxlength="18" placeholder="例如：小王 / 車1"><label class="small">房間代碼（3–12 位英數字）</label><input class="input" id="roomCode" maxlength="12" placeholder="例如：ROAD123"><button class="btn" id="joinRoom">加入車隊</button>
+<div id="adminControls" class="hidden">
+  <button class="btn green" id="createRoom">建立新車隊</button>
+  <button class="btn secondary" id="shareLink">分享加入連結</button>
+  <hr style="border:0;border-top:1px solid #ffffff20;margin:14px 0">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <strong style="font-size:14px">目前房間列表（共 <span id="roomCount">0</span> 間）</strong>
+    <button class="miniBtn" style="background:#303943" id="refreshRooms">重新整理</button>
+  </div>
+  <div class="roomList" id="roomListContainer"><small class="small">載入中...</small></div>
+</div>
+<p class="small" style="margin-top:12px">位置分享須由每位參與者自行同意。GPS 更新需要 HTTPS 網頁與瀏覽器定位權限。<span id="adminUnlock" style="text-decoration:underline;cursor:pointer;margin-left:6px;color:#7d8996">管理員登入</span></p></div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import {getDatabase,ref,set,onValue,remove} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+import {getDatabase,ref,set,onValue,remove,get} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 import {getAuth,signInAnonymously} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
 // === 在這裡修改你的管理模式密碼 ===
@@ -39,15 +50,16 @@ setTimeout(()=>map.invalidateSize(),300);
 let app,db,auth,user=null,room='',myMarker,peerMarkers={},gpsWatch=null,peerData={},membersRef=null,wakeLock=null;
 const $=id=>document.getElementById(id);
 
-// 檢查並套用管理員模式狀態
+function isAdminMode(){ return localStorage.getItem('lf_admin_mode') === '1'; }
+
 function applyAdminUI(){
-  const isAdmin = localStorage.getItem('lf_admin_mode') === '1';
-  if(isAdmin){
+  if(isAdminMode()){
     $('adminControls').classList.remove('hidden');
     $('adminBadge').classList.remove('hidden');
     $('adminUnlock').textContent = '退出管理模式';
-    $('sheetDesc').textContent = '管理模式已啟用：可建立新車隊、分享連結，或輸入代碼加入現有車隊。';
-    setNotice('管理模式：可建立車隊或輸入房間代碼加入');
+    $('sheetDesc').textContent = '管理模式已啟用：可建立新車隊、檢視或刪除現有房間。';
+    setNotice('管理模式：可建立車隊或查看所有房間');
+    loadAllRooms();
   }else{
     $('adminControls').classList.add('hidden');
     $('adminBadge').classList.add('hidden');
@@ -55,11 +67,53 @@ function applyAdminUI(){
     $('sheetDesc').textContent = '輸入你的顯示名稱與隊長提供的房間代碼，即可加入車隊同步位置。';
   }
 }
-applyAdminUI();
+
+async function loadAllRooms(){
+  if(!isAdminMode()) return;
+  $('roomListContainer').innerHTML = '<small class="small">讀取房間資料中...</small>';
+  if(!await ensureConnected()) return;
+  try{
+    const snap = await get(ref(db, 'rooms'));
+    const rooms = snap.val() || {};
+    const entries = Object.entries(rooms);
+    $('roomCount').textContent = entries.length;
+    if(!entries.length){
+      $('roomListContainer').innerHTML = '<small class="small">目前沒有任何建立中的房間</small>';
+      return;
+    }
+    $('roomListContainer').innerHTML = entries.map(([code, data])=>{
+      const members = data?.members ? Object.values(data.members) : [];
+      const names = members.map(m=>escapeHtml(m.name||'未命名')).join('、') || '無成員';
+      return `<div class="roomItem">
+        <div class="roomItemInfo">
+          <b>${escapeHtml(code)}</b> <span style="color:#29c363;font-size:12px">(${members.length}人)</span>
+          <small>成員：${names}</small>
+        </div>
+        <div class="roomItemBtns">
+          <button class="miniBtn" style="background:#3269f3" onclick="window._quickJoin('${escapeHtml(code)}')">加入</button>
+          <button class="miniBtn" style="background:#c93b42" onclick="window._deleteRoom('${escapeHtml(code)}')">刪除</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    $('roomListContainer').innerHTML = `<small class="small" style="color:#ff666c">讀取失敗：${escapeHtml(e.message)}</small>`;
+  }
+}
+
+window._quickJoin = (code)=>{
+  $('roomCode').value = code;
+  enterRoom(code, false);
+};
+window._deleteRoom = async (code)=>{
+  if(!confirm(`確定要刪除房間「${code}」嗎？`)) return;
+  if(!await ensureConnected()) return;
+  await remove(ref(db, `rooms/${code}`));
+  loadAllRooms();
+};
+$('refreshRooms').onclick = loadAllRooms;
 
 $('adminUnlock').onclick = ()=>{
-  const isAdmin = localStorage.getItem('lf_admin_mode') === '1';
-  if(isAdmin){
+  if(isAdminMode()){
     localStorage.removeItem('lf_admin_mode');
     applyAdminUI();
     alert('已退出管理模式');
@@ -70,7 +124,7 @@ $('adminUnlock').onclick = ()=>{
   if(pwd === ADMIN_PASS){
     localStorage.setItem('lf_admin_mode', '1');
     applyAdminUI();
-    alert('管理模式已解鎖！現在可以建立車隊與分享連結。');
+    alert('管理模式已解鎖！');
   }else{
     alert('密碼錯誤');
   }
@@ -101,7 +155,7 @@ function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;',
 function setNotice(s){$('notice').textContent=s}
 function connectFirebase(config){app=initializeApp(config);db=getDatabase(app);auth=getAuth(app);return signInAnonymously(auth).then(c=>{user=c.user;return user;});}
 async function ensureConnected(){if(db&&user)return true;try{await connectFirebase(DEFAULT_CONFIG);return true;}catch(e){setNotice('Firebase 連線失敗：請檢查匿名登入或資料庫規則');return false;}}
-function openSheet(){ $('sheet').classList.add('show'); }
+function openSheet(){ $('sheet').classList.add('show'); if(isAdminMode()) loadAllRooms(); }
 $('roomSettings').onclick=openSheet;$('close').onclick=()=> $('sheet').classList.remove('show');$('sheet').onclick=e=>{if(e.target===$('sheet'))$('sheet').classList.remove('show')};
 function randomRoom(){return Math.random().toString(36).slice(2,8).toUpperCase()}
 async function enterRoom(code,create){if(!/^[A-Z0-9]{3,12}$/.test(code)){setNotice('房間代碼請使用 3–12 位英數字');return;}if(!await ensureConnected())return;room=code;const roomRef=ref(db,`rooms/${room}/members/${user.uid}`);const display=$('displayName').value.trim()||'車友';await set(roomRef,{name:display,joinedAt:Date.now()});$('meName').textContent=display+'（本人）';$('roombadge').textContent='房間：'+room;$('status').textContent='已加入車隊';$('sheet').classList.remove('show');setNotice(create?'車隊建立成功，請分享連結給隊友':'已加入車隊，等待隊友位置');$('shareGps').textContent='開始分享 GPS';listenRoom();}
@@ -137,6 +191,7 @@ $('shareGps').onclick=async()=>{
     $('status').textContent='定位失敗';
   },{enableHighAccuracy:true,maximumAge:1500,timeout:15000});
 };
+applyAdminUI();
 const params=new URLSearchParams(location.search);if(params.get('room')){$('roomCode').value=params.get('room').toUpperCase();openSheet();setNotice('已帶入車隊代碼，輸入名稱後加入');}
 </script>
 </body></html>
