@@ -12,26 +12,37 @@
 <div class="notice" id="notice">建立車隊或輸入房間代碼加入</div><div class="roomBadge" id="roombadge">房間：尚未加入</div>
 <div class="speed"><b id="speed">--</b><span>km/h</span></div>
 <div class="bottom"><div class="people"><div class="person"><span class="dot"></span><div><b id="meName">本人</b><small id="meInfo">尚未分享位置</small></div></div><div class="person"><span class="dot red"></span><div><b>隊友</b><small id="peerInfo">等待隊友加入</small></div></div></div><div class="actions"><button class="btn green" id="shareGps">開始分享 GPS</button><button class="btn secondary" id="roomSettings">車隊 / 設定</button></div></div>
-<div class="sheet" id="sheet"><div class="modal"><button class="x" id="close">關閉</button><h2>車隊設定</h2><p>兩支手機輸入同一個房間代碼，就能在地圖上互相看見位置。建立房間後分享連結給隊友即可。</p><label class="small">你的顯示名稱</label><input class="input" id="displayName" maxlength="18" placeholder="例如：小王 / 車1"><label class="small">房間代碼（3–12 位英數字）</label><input class="input" id="roomCode" maxlength="12" placeholder="例如：ROAD123"><button class="btn green" id="createRoom">建立新車隊</button><button class="btn" id="joinRoom">加入車隊</button><button class="btn secondary" id="shareLink">分享加入連結</button><hr style="border:0;border-top:1px solid #ffffff20;margin:16px 0"><h2>Firebase 連線設定</h2><p>要啟用真實多人同步，需先建立 Firebase Realtime Database 專案並貼入 Web App 設定。設定僅存在此瀏覽器。</p><textarea class="input" id="firebaseConfig" rows="5" placeholder='貼上 Firebase config JSON，例如 {"apiKey":"...","databaseURL":"https://...","projectId":"...","appId":"..."}'></textarea><button class="btn" id="saveConfig">儲存連線設定</button><p class="small">位置分享須由每位參與者自行同意。GPS 更新需要 HTTPS 網頁與瀏覽器定位權限。請勿將此頁用於未經同意追蹤他人。</p><p class="small" id="setupStatus"></p></div></div>
+<div class="sheet" id="sheet"><div class="modal"><button class="x" id="close">關閉</button><h2>車隊設定</h2><p>兩支手機輸入同一個房間代碼，就能在地圖上互相看見位置。建立房間後分享連結給隊友即可。</p><label class="small">你的顯示名稱</label><input class="input" id="displayName" maxlength="18" placeholder="例如：小王 / 車1"><label class="small">房間代碼（3–12 位英數字）</label><input class="input" id="roomCode" maxlength="12" placeholder="例如：ROAD123"><button class="btn green" id="createRoom">建立新車隊</button><button class="btn" id="joinRoom">加入車隊</button><button class="btn secondary" id="shareLink">分享加入連結</button><hr style="border:0;border-top:1px solid #ffffff20;margin:16px 0"><h2>Firebase 連線設定（已內建）</h2><p>此網頁已內建預設資料庫連線設定，可直接建立或加入車隊。若需更換其他資料庫可在此覆蓋。</p><textarea class="input" id="firebaseConfig" rows="4" placeholder='已內建預設連線設定'></textarea><button class="btn" id="saveConfig">覆蓋並儲存自訂設定</button><p class="small">位置分享須由每位參與者自行同意。GPS 更新需要 HTTPS 網頁與瀏覽器定位權限。請勿將此頁用於未經同意追蹤他人。</p><p class="small" id="setupStatus">狀態：已載入內建資料庫設定</p></div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {getDatabase,ref,set,onValue,remove} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 import {getAuth,signInAnonymously} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+const DEFAULT_CONFIG = {
+  apiKey: "AIzaSyBCFB8AIDl7QIs7t35TTtvW1twG4S6-bp0",
+  authDomain: "live-follow-2633d.firebaseapp.com",
+  databaseURL: "https://live-follow-2633d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "live-follow-2633d",
+  storageBucket: "live-follow-2633d.firebasestorage.app",
+  messagingSenderId: "521304626744",
+  appId: "1:521304626744:web:176c97f0bb10dca3c9f8cd"
+};
+
 const map=L.map('map').setView([23.0,120.2],16);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
 let app,db,auth,user=null,room='',myMarker,peerMarkers={},peerLines={},gpsWatch=null,lastSpeed=0,peerData={},membersRef=null;
 const $=id=>document.getElementById(id);
 function markerIcon(color,name){return L.divIcon({className:'',html:`<div style="font-size:24px;background:#fff;border:3px solid ${color};border-radius:9px;padding:2px 5px;box-shadow:0 2px 8px #0005">🚙</div><div style="font-size:11px;background:#20252c;color:#fff;border-radius:8px;padding:2px 5px;text-align:center;margin-top:1px">${escapeHtml(name)}</div>`,iconSize:[48,45],iconAnchor:[24,20]})}
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function setNotice(s){$('notice').textContent=s}
-function readConfig(){try{return JSON.parse(localStorage.getItem('lf_firebase_config')||'null')}catch{return null}}
+function readConfig(){try{const saved=JSON.parse(localStorage.getItem('lf_firebase_config')||'null');return saved||DEFAULT_CONFIG;}catch{return DEFAULT_CONFIG;}}
 function connectFirebase(config){app=initializeApp(config);db=getDatabase(app);auth=getAuth(app);return signInAnonymously(auth).then(c=>{user=c.user;return user;});}
-async function ensureConnected(){if(db&&user)return true;const cfg=readConfig();if(!cfg){setNotice('先在「車隊 / 設定」貼上 Firebase 設定並儲存');$('setupStatus').textContent='尚未設定 Firebase';return false;}try{await connectFirebase(cfg);return true;}catch(e){setNotice('Firebase 連線失敗：請檢查設定或資料庫規則');$('setupStatus').textContent=e.message;return false;}}
+async function ensureConnected(){if(db&&user)return true;const cfg=readConfig();try{await connectFirebase(cfg);return true;}catch(e){setNotice('Firebase 連線失敗：請檢查匿名登入或資料庫規則');$('setupStatus').textContent=e.message;return false;}}
 function openSheet(){ $('sheet').classList.add('show'); const c=readConfig(); if(c)$('firebaseConfig').value=JSON.stringify(c,null,2);}
 $('roomSettings').onclick=openSheet;$('close').onclick=()=> $('sheet').classList.remove('show');$('sheet').onclick=e=>{if(e.target===$('sheet'))$('sheet').classList.remove('show')};
-$('saveConfig').onclick=()=>{try{const c=JSON.parse($('firebaseConfig').value);localStorage.setItem('lf_firebase_config',JSON.stringify(c));$('setupStatus').textContent='設定已儲存。按「建立新車隊」或「加入車隊」測試連線。';setNotice('Firebase 設定已儲存');}catch(e){$('setupStatus').textContent='JSON 格式錯誤，請檢查貼上的設定。'}};
+$('saveConfig').onclick=()=>{try{const c=JSON.parse($('firebaseConfig').value);localStorage.setItem('lf_firebase_config',JSON.stringify(c));$('setupStatus').textContent='自訂設定已儲存，重新整理網頁後生效。';setNotice('自訂設定已儲存');}catch(e){$('setupStatus').textContent='JSON 格式錯誤，請檢查貼上的設定。'}};
 function randomRoom(){return Math.random().toString(36).slice(2,8).toUpperCase()}
-async function enterRoom(code,create){if(!/^[A-Z0-9]{3,12}$/.test(code)){setNotice('房間代碼請使用 3–12 位英數字');return;}if(!await ensureConnected())return;room=code;const roomRef=ref(db,`rooms/${room}/members/${user.uid}`);const display=$('displayName').value.trim()||'車友';await set(roomRef,{name:display,joinedAt:Date.now()});$('meName').textContent=display+'（本人）';$('roombadge').textContent='房間：'+room;$('status').textContent='已加入車隊';$('sheet').classList.remove('show');setNotice(create?'車隊建立成功，請分享房間代碼給隊友':'已加入車隊，等待隊友位置');$('shareGps').textContent='開始分享 GPS';listenRoom();}
+async function enterRoom(code,create){if(!/^[A-Z0-9]{3,12}$/.test(code)){setNotice('房間代碼請使用 3–12 位英數字');return;}if(!await ensureConnected())return;room=code;const roomRef=ref(db,`rooms/${room}/members/${user.uid}`);const display=$('displayName').value.trim()||'車友';await set(roomRef,{name:display,joinedAt:Date.now()});$('meName').textContent=display+'（本人）';$('roombadge').textContent='房間：'+room;$('status').textContent='已加入車隊';$('sheet').classList.remove('show');setNotice(create?'車隊建立成功，請分享連結給隊友':'已加入車隊，等待隊友位置');$('shareGps').textContent='開始分享 GPS';listenRoom();}
 $('createRoom').onclick=()=>{const code=($('roomCode').value.trim().toUpperCase()||randomRoom());$('roomCode').value=code;enterRoom(code,true)};
 $('joinRoom').onclick=()=>enterRoom($('roomCode').value.trim().toUpperCase(),false);
 $('shareLink').onclick=async()=>{if(!room){setNotice('先建立或加入車隊');return;}const url=new URL(location.href);url.searchParams.set('room',room);try{await navigator.clipboard.writeText(url.href);setNotice('加入連結已複製！傳給隊友即可');}catch{prompt('複製這個連結給隊友：',url.href)}};
