@@ -33,8 +33,29 @@ const map=L.map('map').setView([23.0,120.2],16);
 L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}',{maxZoom:19,attribution:'© 內政部國土測繪中心'}).addTo(map);
 setTimeout(()=>map.invalidateSize(),300);
 
-let app,db,auth,user=null,room='',myMarker,peerMarkers={},gpsWatch=null,peerData={},membersRef=null;
+let app,db,auth,user=null,room='',myMarker,peerMarkers={},gpsWatch=null,peerData={},membersRef=null,wakeLock=null;
 const $=id=>document.getElementById(id);
+
+async function requestWakeLock(){
+  if('wakeLock' in navigator){
+    try{
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', ()=>{ wakeLock = null; });
+    }catch(e){}
+  }
+}
+function releaseWakeLock(){
+  if(wakeLock){
+    wakeLock.release().catch(()=>{});
+    wakeLock = null;
+  }
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && gpsWatch !== null){
+    requestWakeLock();
+  }
+});
+
 function markerIcon(color,name){return L.divIcon({className:'',html:`<div style="font-size:24px;background:#fff;border:3px solid ${color};border-radius:9px;padding:2px 5px;box-shadow:0 2px 8px #0005">🚙</div><div style="font-size:11px;background:#20252c;color:#fff;border-radius:8px;padding:2px 5px;text-align:center;margin-top:1px">${escapeHtml(name)}</div>`,iconSize:[48,45],iconAnchor:[24,20]})}
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function setNotice(s){$('notice').textContent=s}
@@ -50,7 +71,32 @@ $('shareLink').onclick=async()=>{if(!room){setNotice('先建立或加入車隊')
 function listenRoom(){if(membersRef)membersRef=null;const allRef=ref(db,`rooms/${room}/members`);onValue(allRef,snap=>{const members=snap.val()||{};peerData=members;renderPeers(members);});}
 function renderPeers(members){const others=Object.entries(members).filter(([id])=>id!==user?.uid);if(!others.length){$('peerInfo').textContent='等待隊友加入';$('distance').textContent='-- m';Object.values(peerMarkers).forEach(m=>map.removeLayer(m));peerMarkers={};return;}const [id,p]=others[0];$('peerInfo').textContent=p?.lat!=null?`${p.name||'隊友'} · ${p.speed==null?'--':Math.round(p.speed*3.6)+' km/h'}`:`${p.name||'隊友'} · 尚未分享 GPS`;for(const [pid,p] of others){if(p.lat==null||p.lon==null)continue;const ll=[p.lat,p.lon];if(!peerMarkers[pid])peerMarkers[pid]=L.marker(ll,{icon:markerIcon('#ff6262',p.name||'隊友')}).addTo(map);else peerMarkers[pid].setLatLng(ll);if(myMarker){const own=myMarker.getLatLng();const d=map.distance(own,ll);$('distance').textContent=Math.round(d)+' m';}}if(myMarker&&others[0]?.lat!=null){const myll=myMarker.getLatLng();const pll=[others[0][1].lat,others[0][1].lon];map.fitBounds([myll,pll],{padding:[65,65],maxZoom:18});}}
 function updateOwnPosition(coords){const lat=coords.latitude,lon=coords.longitude,speed=coords.speed;const ll=[lat,lon];if(!myMarker){myMarker=L.marker(ll,{icon:markerIcon('#3398ff',$('meName').textContent)}).addTo(map);map.setView(ll,16);}else myMarker.setLatLng(ll);$('speed').textContent=speed==null?'--':Math.round(speed*3.6);$('meInfo').textContent='GPS 更新中 · '+(speed==null?'速度未知':Math.round(speed*3.6)+' km/h');if(room&&db&&user){set(ref(db,`rooms/${room}/members/${user.uid}`),{name:$('displayName').value.trim()||$('meName').textContent.replace('（本人）',''),lat,lon,speed:speed??null,heading:coords.heading??null,accuracy:coords.accuracy,timestamp:Date.now()}).catch(e=>setNotice('位置上傳錯誤：'+e.message));}renderPeers(peerData);}
-$('shareGps').onclick=async()=>{if(!room){openSheet();setNotice('請先建立或加入車隊');return;}if(!navigator.geolocation){setNotice('此瀏覽器不支援 GPS 定位');return;}if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;$('shareGps').textContent='開始分享 GPS';$('meInfo').textContent='已停止分享';setNotice('已停止分享位置');if(user&&db)remove(ref(db,`rooms/${room}/members/${user.uid}/lat`));return;}if(!await ensureConnected())return;gpsWatch=navigator.geolocation.watchPosition(p=>{updateOwnPosition(p.coords);$('status').textContent='GPS 分享中';setNotice('位置正在同步給同車隊成員');$('shareGps').textContent='停止分享 GPS';},err=>{setNotice('定位錯誤：請允許定位並確認網頁使用 HTTPS');$('status').textContent='定位失敗';},{enableHighAccuracy:true,maximumAge:1500,timeout:15000});};
+$('shareGps').onclick=async()=>{
+  if(!room){openSheet();setNotice('請先建立或加入車隊');return;}
+  if(!navigator.geolocation){setNotice('此瀏覽器不支援 GPS 定位');return;}
+  if(gpsWatch!==null){
+    navigator.geolocation.clearWatch(gpsWatch);
+    gpsWatch=null;
+    releaseWakeLock();
+    $('shareGps').textContent='開始分享 GPS';
+    $('meInfo').textContent='已停止分享';
+    setNotice('已停止分享位置（已解除螢幕恆亮）');
+    if(user&&db)remove(ref(db,`rooms/${room}/members/${user.uid}/lat`));
+    return;
+  }
+  if(!await ensureConnected())return;
+  await requestWakeLock();
+  gpsWatch=navigator.geolocation.watchPosition(p=>{
+    updateOwnPosition(p.coords);
+    $('status').textContent='GPS 分享中';
+    setNotice(wakeLock ? '位置同步中（螢幕已保持恆亮）' : '位置正在同步給同車隊成員');
+    $('shareGps').textContent='停止分享 GPS';
+  },err=>{
+    releaseWakeLock();
+    setNotice('定位錯誤：請允許定位並確認網頁使用 HTTPS');
+    $('status').textContent='定位失敗';
+  },{enableHighAccuracy:true,maximumAge:1500,timeout:15000});
+};
 const params=new URLSearchParams(location.search);if(params.get('room')){$('roomCode').value=params.get('room').toUpperCase();openSheet();setNotice('已帶入車隊代碼，輸入名稱後加入');}
 </script>
 </body></html>
